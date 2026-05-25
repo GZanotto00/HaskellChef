@@ -1,0 +1,7 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "HaskellChef:lib"
+
+    - path: "./test"
+      component: "HaskellChef:test:HaskellChef-test"
