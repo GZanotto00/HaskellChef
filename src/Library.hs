@@ -72,7 +72,7 @@ filtrarComponentesDesde10Gramos = filter esMayorA10Gramos
 
 simplificar :: Truco
 simplificar plato
-  | tieneMasDe5Componentes plato && dificultadMayorA7 plato = (modificarDificultad (const 5)).(modificarComponentes filtrarComponentesDesde10Gramos) $ plato
+  | esComplejo plato = (modificarDificultad (const 5)).(modificarComponentes filtrarComponentesDesde10Gramos) $ plato
   | otherwise = plato
 
 ------------------------------------
@@ -95,7 +95,7 @@ tieneIngredientesLacteos :: CaracteristicaPlato
 tieneIngredientesLacteos = any esAlimentoLacteo . componentes
 
 esVegano :: CaracteristicaPlato
-esVegano plato = not (tieneIngrediente "carne" plato || tieneIngrediente "huevos" plato || tieneIngredientesLacteos plato)
+esVegano plato = not (tieneIngrediente "carne" plato || tieneIngrediente "huevo" plato || tieneIngredientesLacteos plato)
     
 esSinTacc :: CaracteristicaPlato
 esSinTacc = not.(tieneIngrediente "harina")
@@ -103,11 +103,14 @@ esSinTacc = not.(tieneIngrediente "harina")
 esComplejo :: CaracteristicaPlato
 esComplejo plato = tieneMasDe5Componentes plato && dificultadMayorA7 plato
 
-masDe2GramosDeSal :: Componente -> Bool
-masDe2GramosDeSal componente = esIngrediente "sal" componente && ((> 2).pesoEnGramos $ componente)
+esSal :: Componente -> Bool
+esSal componente = ingrediente componente == "sal"
+
+gramosDe :: String -> Plato -> Number
+gramosDe unIngrediente = sum.(map pesoEnGramos).(filter (esIngrediente unIngrediente)).componentes
 
 noAptoHipertension :: CaracteristicaPlato
-noAptoHipertension plato = any masDe2GramosDeSal (componentes plato)
+noAptoHipertension plato = (gramosDe "sal" plato) > 2
 
 -------------------------------------------------
 
@@ -115,7 +118,7 @@ especialDePepeRonccino :: Plato
 especialDePepeRonccino = UnPlato {
     nombrePlato = "Especial Pepe",
     dificultad = 8,
-    componentes = [(UnComponente "leche" 1000), (UnComponente "manteca" 100), (UnComponente "semola" 250), (UnComponente "queso" 50), (UnComponente "pimienta" 3), (UnComponente "nuez moscada" 1)]
+    componentes = [(UnComponente "leche" 1000), (UnComponente "manteca" 100), (UnComponente "semola" 250), (UnComponente "queso" 50), (UnComponente "pimienta" 3), (UnComponente "nuez moscada" 1), (UnComponente "huevo" 80), (UnComponente "sal" 2)]
 }
 
 pepeRonccino :: Participante
@@ -130,11 +133,8 @@ pepeRonccino = UnParticipante {
 aplicarTruco :: Truco -> Plato -> Plato
 aplicarTruco truco plato = truco plato
 
-aplicarTrucosAPlato :: Participante -> Plato
-aplicarTrucosAPlato participante = foldr aplicarTruco (platoEspecial participante) (trucos participante)
-
 cocinar :: Participante -> Plato
-cocinar participante = aplicarTrucosAPlato participante
+cocinar participante = foldr aplicarTruco (platoEspecial participante) (trucos participante)
 
 ----------------------------------------------------
 
@@ -145,7 +145,7 @@ sumarPesoComponente :: Componente -> Number -> Number
 sumarPesoComponente componente peso = peso + (pesoEnGramos componente)
 
 pesoPlato :: Plato -> Number
-pesoPlato plato = foldr sumarPesoComponente 0 (componentes plato)
+pesoPlato = sum.(map pesoEnGramos).componentes
 
 esMejorQue :: Plato -> Plato -> Bool
 esMejorQue plato1 plato2 = (plato1 `tieneMayorDificultad` plato2) && (pesoPlato plato1) < (pesoPlato plato2)
@@ -163,3 +163,4 @@ participanteConMejorPlatoCocinado participante1 participante2
 participanteEstrella :: [Participante] -> Participante
 participanteEstrella [p] = p
 participanteEstrella (x:xs) = participanteConMejorPlatoCocinado x (participanteEstrella xs)
+
